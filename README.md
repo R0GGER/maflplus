@@ -384,10 +384,10 @@ services:
 
 ### Favicon API
 
-Automatically fetch service icons by domain name using a favicon API. Set the base URL globally:
+Automatically fetch service icons by domain name using a favicon API. The default is [faviconapi.com](https://faviconapi.com); you can replace it with any other endpoint, or [create a Custom URL](https://faviconapi.com/#tools):
 
 ```yaml
-faviconApi: https://favicon.vemetric.com/
+faviconApi: https://faviconapi.com
 ```
 
 Then reference a domain in any service icon:
