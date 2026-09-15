@@ -8,7 +8,7 @@ logo:
   fontWeight: 500
   color: "#ffffff"
 background: background.jpg
-faviconApi: https://favicon.vemetric.com
+faviconApi: https://faviconapi.com
 backgroundOverlay:
   color: "#000000"
   opacity: 0.85
