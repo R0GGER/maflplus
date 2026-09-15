@@ -319,10 +319,10 @@ Each service group can be rendered as **grid** (cards) or **list** (compact rows
 
 ### Favicon API
 
-Automatically fetch service icons by domain name. Set the base URL globally and reference domains per service.
+Automatically fetch service icons by domain name. The default is [faviconapi.com](https://faviconapi.com); you can replace it with any other endpoint, or [create a Custom URL](https://faviconapi.com/#tools).
 
 ```yaml
-faviconApi: https://favicon.vemetric.com/
+faviconApi: https://faviconapi.com
 ```
 
 ```yaml

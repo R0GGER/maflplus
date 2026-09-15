@@ -17,6 +17,7 @@ MAFL+ includes several built-in service modules that can be added to your dashbo
   * [TomTom ETA Map](#tomtom-eta-map)
   * [TomTom Traffic Map](#tomtom-traffic-map)
 * [Web Radio](#web-radio)
+* [Uptime Kuma](#uptime-kuma)
 * [Grid Span](#grid-span)
 * [Grid Stack](#grid-stack)
 * [Date Formats](#date-formats)
@@ -37,6 +38,7 @@ MAFL+ includes several built-in service modules that can be added to your dashbo
 | [TomTom ETA Map](#tomtom-eta-map) | `tomtom-eta-map` | Route map with traffic flow and incidents using TomTom |
 | [TomTom Traffic Map](#tomtom-traffic-map) | `tomtom-traffic-map` | Traffic map centered on a location without route |
 | [Web Radio](#web-radio) | `web-radio` | Internet radio station with on-site streaming via Radio Browser |
+| [Uptime Kuma](#uptime-kuma) | `uptime-kuma` | Status, uptime, ping and heartbeat history from an Uptime Kuma instance |
 
 All modules support common service properties like `span`, `icon` and `tags`. See [Configuration](configuration.md#service-item-properties) for the full list.
 
@@ -743,6 +745,165 @@ tabs:
 - Some community-listed streams may be offline — try another station or search again
 - Search bar Webradio section requires `searchWebradio: true` in config (see [Search](configuration.md#search)); filter country via `searchWebradioCountryCode`
 - See also [Configuration — Web Radio](configuration.md#web-radio)
+
+---
+
+## Uptime Kuma
+
+Show the state of your services from an existing [Uptime Kuma](https://github.com/louislam/uptime-kuma) instance. The widget lists one or more monitors with their current status, uptime percentage, response time, optional certificate expiry and a row of heartbeat bars.
+
+All data is fetched server-side, so the Kuma URL may be an internal LAN address that your browser cannot reach. No API key is needed.
+
+> **Requirement:** Uptime Kuma only publishes monitor data for monitors that belong to a **published status page**. Add the monitors to a status page in Kuma and publish it, otherwise Kuma reports them as `N/A`.
+
+> **Tip:** To put a Kuma status dot on your regular bookmark tiles instead of (or in addition to) this widget, use [`status.monitor`](configuration.md#status-from-uptime-kuma).
+
+### Data sources
+
+The module picks its source automatically:
+
+| `slug` set? | Source | What you get |
+|---|---|---|
+| Yes | Status page API | All public monitors in two cached requests, including monitor names, current status, response time, 24h uptime and heartbeat history |
+| No | Badge API | Only the monitors listed in `monitors`, with a free choice of uptime window, but no heartbeat history |
+
+Using a `slug` is recommended: it is both richer and cheaper, since one request covers every monitor.
+
+### Admin
+
+In the Config Builder, add **Monitoring → Uptime Kuma** to a grid group. The instance URL and status page slug default to the global [Uptime Kuma settings](configuration.md#uptime-kuma), so per widget you usually only fill in the monitor list.
+
+The **Monitors** field is a comma separated list. Use a plain `id`, or `id:Label` to override the name Kuma reports:
+
+```
+1, 4:Mailserver, 9
+```
+
+Leave the field empty to show every public monitor of the status page.
+
+### Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `url` | `string` | value of global [`uptimeKuma.url`](configuration.md#uptime-kuma) | Base URL of the Uptime Kuma instance |
+| `slug` | `string` | value of global [`uptimeKuma.slug`](configuration.md#uptime-kuma) | Slug of a published status page. Enables heartbeat history. |
+| `monitors` | `array` | all public monitors | Monitor IDs to show. In status page mode this filters the page; without a `slug` it is required. Accepts plain IDs or `{ id, name }` objects. |
+| `uptimeDuration` | `string` | `24h` | Uptime window, e.g. `24h`, `168h` (7d) or `720h` (30d). Badge mode only; the status page API always reports 24h. |
+| `heartbeatCount` | `number` | `30` | Number of heartbeat bars to show (Kuma keeps the last 100) |
+| `heartbeatWidth` | `number` \| `string` | — | Width of one heartbeat bar, e.g. `4` or `4px`. Without it the bars stretch to fill the row, so their thickness follows from `heartbeatCount`. With it the width is fixed and the leftover space is spread over the gaps, keeping the row flush with the card. |
+| `showHeartbeat` | `boolean` | `true` | Show the heartbeat bars |
+| `showUptime` | `boolean` | `true` | Show the uptime percentage |
+| `showPing` | `boolean` | `true` | Show the response time |
+| `showCertExp` | `boolean` | `false` | Show the remaining days of the TLS certificate |
+
+### Secrets
+
+| Secret | Type | Description |
+|--------|------|-------------|
+| `url` | `string` | Same as `options.url`, but stripped from everything the browser receives. Use this if the instance URL should not be exposed. |
+
+### Icon
+
+Works like any other service item: set `icon.name`, `icon.url` or `icon.favicon`. Without an icon a default `mdi:heart-pulse` is used; set [`icon.hidden`](configuration.md#no-icon) to drop the icon entirely.
+
+### Examples
+
+#### All monitors of a status page
+
+```yaml
+uptimeKuma:
+  url: http://192.168.1.10:3001
+  slug: default
+
+services:
+  Monitoring:
+    display: grid
+    items:
+      - type: uptime-kuma
+        span: 2
+        title: Home Lab
+        icon:
+          favicon: uptime.kuma.pet
+          wrap: true
+        options:
+          showCertExp: true
+          heartbeatCount: 40
+```
+
+#### Selected monitors, compact
+
+```yaml
+services:
+  Monitoring:
+    display: grid
+    items:
+      - type: uptime-kuma
+        title: Critical
+        options:
+          url: http://192.168.1.10:3001
+          slug: default
+          monitors:
+            - 1
+            - 4
+          showHeartbeat: false
+```
+
+#### Badge mode with a 30-day uptime window
+
+Without a `slug` the module reads the badge API, which allows any uptime window but has no heartbeat history.
+
+```yaml
+services:
+  Monitoring:
+    display: grid
+    items:
+      - type: uptime-kuma
+        title: Public services
+        options:
+          url: http://192.168.1.10:3001
+          uptimeDuration: 720h
+          showCertExp: true
+          monitors:
+            - id: 1
+              name: example.com
+            - id: 7
+              name: mail.example.com
+```
+
+#### Private instance URL
+
+```yaml
+services:
+  Monitoring:
+    display: grid
+    items:
+      - type: uptime-kuma
+        title: Servers
+        options:
+          slug: default
+        secrets:
+          url: http://192.168.1.10:3001
+```
+
+### Status colours
+
+| Monitor state | Dot and heartbeat bar |
+|---|---|
+| Up | Green |
+| Down | Red |
+| Pending | Amber |
+| Maintenance | Blue |
+| Unknown or not published | Grey |
+
+The card description summarises the group, for example `Degraded · 3/4 up`. Maintenance takes precedence over everything else, matching Kuma's own status page.
+
+### Notes
+
+- Uptime Kuma caches badges for 5 minutes and status page heartbeats for 1 minute, so polling faster than the default 60 seconds gains nothing. MAFL+ caches upstream responses as well.
+- Certificate expiry always comes from the badge API, because the status page API does not expose it. It therefore costs one extra request per monitor; leave `showCertExp` off if you do not need it.
+- Configuration problems and an unreachable instance are shown on the card itself and logged server-side, rather than leaving the card empty.
+- The widget renders a list below the card header, so it belongs in a group with `display: grid`. In `display: list` mode only the title and status dot are shown.
+- See also [Configuration — Uptime Kuma](configuration.md#uptime-kuma)
 
 ---
 

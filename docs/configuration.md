@@ -29,6 +29,7 @@ All settings live in a single `config.yml` file inside the data volume (`./mafl/
 - [Service Item Properties](#service-item-properties)
 - [Icon](#icon)
 - [Status Indicator](#status-indicator)
+- [Uptime Kuma](#uptime-kuma)
 - [Favicon API](#favicon-api)
 - [Tags](#tags)
 - [Behaviour](#behaviour)
@@ -757,6 +758,22 @@ Services support multiple icon sources. The `icon` object is configured per serv
 | `wrap` | `boolean` | Show a circular background behind the icon | `false` |
 | `color` | `string` | Icon color (Iconify icons only) | _inherits from theme_ |
 | `background` | `string` | Custom background color for the icon circle | _inherits from theme_ |
+| `hidden` | `boolean` | Render the item without an icon, dropping the reserved space as well | `false` |
+
+### No icon
+
+Leaving `icon` out gives an item without an icon, but the space for it stays reserved, so the title keeps its indent. Modules that have a fallback icon — such as [`uptime-kuma`](modules.md#uptime-kuma) or [`web-radio`](modules.md#web-radio) — also keep showing theirs.
+
+Set `hidden` to remove both:
+
+```yaml
+- title: Just a label
+  link: https://example.com
+  icon:
+    hidden: true
+```
+
+In the Config Builder this is the fourth **Icon Type** option, **none**.
 
 ### Icon examples
 
@@ -787,7 +804,7 @@ See [Favicons](favicons.md) for icon types, self-hosted favicon API setup and cu
 
 ## Status Indicator
 
-Enable a live uptime ping indicator per service. The indicator shows whether the service URL is reachable.
+Enable a live uptime indicator per service. By default the indicator shows whether the service URL is reachable, measured with a TCP ping from the MAFL+ server.
 
 ```yaml
 - title: Home Assistant
@@ -807,15 +824,86 @@ Enable a live uptime ping indicator per service. The indicator shows whether the
 | `position` | `string` | Indicator position: `left` or `right` | `right` |
 | `animation` | `boolean` | Show a pulsing animation on the indicator | `true` |
 | `interval` | `number` | Ping interval in seconds | `60` |
+| `monitor` | `number` \| `string` | Take the status from an [Uptime Kuma](#uptime-kuma) monitor instead of a TCP ping | — |
+
+### Status from Uptime Kuma
+
+Instead of pinging the link, the indicator can reflect the real state of an [Uptime Kuma](#uptime-kuma) monitor. This is more accurate than a TCP ping, because Kuma already knows about HTTP status codes, keywords, certificates and retries.
+
+Configure the instance once with [`uptimeKuma`](#uptime-kuma), then point each item at a monitor with `status.monitor`:
+
+```yaml
+uptimeKuma:
+  url: http://192.168.1.10:3001
+  slug: default
+
+services:
+  Apps:
+    display: grid
+    items:
+      - title: Home Assistant
+        link: https://ha.local
+        icon:
+          favicon: home-assistant.io
+        status:
+          enabled: true
+          monitor: 4            # Uptime Kuma monitor ID
+
+      - title: Nextcloud
+        link: https://cloud.local
+        icon:
+          favicon: nextcloud.com
+        status:
+          enabled: true
+          monitor: Nextcloud    # or match on the monitor name
+```
+
+`monitor` accepts either the numeric monitor ID or the monitor name as shown on the status page. Name matching is case-insensitive and needs `uptimeKuma.slug` to be set.
+
+Indicator colours:
+
+| Monitor state | Indicator |
+|---|---|
+| Up | Green |
+| Down or Pending | Red |
+| Maintenance | Grey |
+| Monitor not found or instance unreachable | Grey |
+
+Maintenance deliberately shows grey rather than red, so planned downtime does not look like an outage. Items without `monitor` keep using the TCP ping, so you can mix both on one dashboard.
+
+In the Config Builder the field appears on a bookmark as **Uptime Kuma monitor** once **Uptime monitoring** is checked. Leave it empty to keep the TCP ping.
+
+---
+
+## Uptime Kuma
+
+Connect MAFL+ to an [Uptime Kuma](https://github.com/louislam/uptime-kuma) instance. One global block serves both the [`uptime-kuma` module](modules.md#uptime-kuma) and the per-item [status indicator](#status-from-uptime-kuma).
+
+```yaml
+uptimeKuma:
+  url: http://192.168.1.10:3001
+  slug: default
+```
+
+| Property | Type | Description | Default |
+|---|---|---|---|
+| `url` | `string` | Base URL of the Uptime Kuma instance, without a trailing slash | — |
+| `slug` | `string` | Slug of a published status page | — |
+
+Both values can be overridden per module through `options.url` and `options.slug`. In the Config Builder both fields live under **Global Settings**.
+
+> **Requirement:** Uptime Kuma only exposes monitor data for monitors that belong to a **published status page**. Add the monitors you want to show to a status page in Kuma and publish it, otherwise Kuma reports them as `N/A`.
+
+All requests are made server-side, so `url` may be an internal LAN address that is not reachable from your browser. Note that `uptimeKuma.url` is part of the settings payload the frontend receives; if you would rather not expose it, set it per module through `secrets.url` instead, which is stripped from everything the browser sees.
 
 ---
 
 ## Favicon API
 
-Automatically fetch service icons by domain name using a favicon API. Set the base URL globally in your config:
+Automatically fetch service icons by domain name using a favicon API. The default is [faviconapi.com](https://faviconapi.com); you can replace it with any other endpoint, or [create a Custom URL](https://faviconapi.com/#tools) that encodes providers, fallbacks and size.
 
 ```yaml
-faviconApi: https://favicon.vemetric.com/
+faviconApi: https://faviconapi.com
 ```
 
 Then reference a domain in any service icon:
@@ -968,7 +1056,7 @@ lang: en
 theme: dark
 logo: logo.png
 background: background1.jpg
-faviconApi: https://favicon.vemetric.com/
+faviconApi: https://faviconapi.com
 backgroundOverlay:
   color: '#000000'
   opacity: 0.5

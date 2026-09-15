@@ -72,7 +72,7 @@ The admin panel provides a full visual config builder with the following capabil
 
 | Feature | Description |
 |---------|-------------|
-| **Global Settings** | Title, language, theme, logo (image or text), background, overlay, search provider, optional Webradio search |
+| **Global Settings** | Title, language, theme, logo (image or text), background, overlay, search provider, optional Webradio search, Favicon API (defaults to [faviconapi.com](https://faviconapi.com)) |
 | **Layout & Styles** | Grid/list columns, grid icon size & item padding, spacing, category/title/description typography |
 | **Tabs** | Add, rename, reorder and delete tabs with custom icons |
 | **Tab visibility** | Toggle the eye icon to hide/show a tab on the frontpage — hidden tabs remain editable in admin |

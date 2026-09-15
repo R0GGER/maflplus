@@ -47,10 +47,10 @@ icon:
 
 ## Favicon API
 
-Set a global favicon API base URL in your `config.yml`. When a service uses `icon.favicon`, the domain is passed to this API to fetch the icon automatically.
+Set a global favicon API base URL in your `config.yml`. When a service uses `icon.favicon`, the domain is passed to this API to fetch the icon automatically. The default is [faviconapi.com](https://faviconapi.com); you can replace it with any other endpoint, or [create a Custom URL](https://faviconapi.com/#tools) that encodes your preferred provider, fallbacks and minimum icon size.
 
 ```yaml
-faviconApi: https://favicon.vemetric.com/
+faviconApi: https://faviconapi.com
 ```
 
 Then reference a domain in any service:
@@ -59,6 +59,14 @@ Then reference a domain in any service:
 icon:
   favicon: github.com
 ```
+
+The domain is always appended after the last slash of `faviconApi`, so the value may include a path prefix. This makes it compatible with Custom URLs from [faviconapi.com](https://faviconapi.com/#tools):
+
+```yaml
+faviconApi: https://faviconapi.com/WzEsInNjcmFwZXIiLFsic2NyYXBlciIsInNlbGZoc3QiLCJzdmdsIiwiZ29vZ2xldjIiXSwxMjhd
+```
+
+With the config above, a service using `icon.favicon: reddit.com` is resolved to `https://faviconapi.com/WzEs.../reddit.com`. A trailing slash on `faviconApi` is optional (it is stripped automatically).
 
 ### Self-hosted Favicon API
 
