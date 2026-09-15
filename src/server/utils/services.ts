@@ -49,10 +49,37 @@ export async function getService<T extends Service>(event: H3Event): Promise<T> 
   return services[id]
 }
 
+/**
+ * Resolve the status indicator of a service item. A "monitor" reference takes
+ * its state from Uptime Kuma, everything else falls back to a TCP ping.
+ */
+async function resolveStatus<S extends Service>(service: S): Promise<PingServiceData | undefined> {
+  if (!service?.status?.enabled) {
+    return undefined
+  }
+
+  const monitor = service.status.monitor
+
+  if (monitor === undefined || monitor === null || monitor === '') {
+    return pingService(service.link || '')
+  }
+
+  const config = await getConfig()
+  const url = normalizeKumaUrl(config?.uptimeKuma?.url)
+
+  if (!url) {
+    logger.warn(`Service "${service.title || service.id}" uses status.monitor but "uptimeKuma.url" is not configured`)
+
+    return undefined
+  }
+
+  return getMonitorPing({ url, slug: config?.uptimeKuma?.slug }, monitor)
+}
+
 export async function getServiceWithDefaultData<S extends Service>(event: H3Event): Promise<ServiceWithDefaultData<S>> {
   const config = await getService<S>(event)
   const defaultData = {
-    ping: config?.status?.enabled ? await pingService(config.link || '') : undefined,
+    ping: await resolveStatus(config),
   }
 
   return { config, defaultData }

@@ -5,6 +5,11 @@ export interface ServiceStatus {
   interval?: number
   animation?: boolean
   position?: 'left' | 'right'
+  /**
+   * Uptime Kuma monitor ID, or its name when a status page slug is configured.
+   * When set, the indicator reflects that monitor instead of a TCP ping.
+   */
+  monitor?: number | string
 }
 
 export interface ServiceIcon {
@@ -14,6 +19,11 @@ export interface ServiceIcon {
   wrap?: boolean
   background?: string
   color?: string
+  /**
+   * Render the item without an icon and without the space reserved for it,
+   * also suppressing the default icon a module would otherwise fall back to.
+   */
+  hidden?: boolean
 }
 
 export interface Service {
@@ -195,6 +205,54 @@ export interface WebRadioService extends Service {
     favicon: string
     tags: string
     meta: string
+  }
+}
+
+export type UptimeKumaStatus = 'up' | 'down' | 'pending' | 'maintenance' | 'unknown'
+
+export interface UptimeKumaHeartbeat {
+  status: number
+  time: string
+  ping: number | null
+}
+
+export interface UptimeKumaMonitor {
+  id: number
+  name: string
+  status: UptimeKumaStatus
+  uptime: number | null
+  ping: number | null
+  certExpiryDays: number | null
+  url?: string
+  heartbeats: UptimeKumaHeartbeat[]
+}
+
+export interface UptimeKumaService extends Service {
+  options: {
+    url?: string
+    slug?: string
+    monitors?: (number | string | { id: number | string, name?: string })[]
+    uptimeDuration?: string
+    heartbeatCount?: number
+    /**
+     * Width of a single heartbeat bar, e.g. 4 or '4px'. Without it the bars
+     * stretch to fill the row.
+     */
+    heartbeatWidth?: number | string
+    showUptime?: boolean
+    showPing?: boolean
+    showHeartbeat?: boolean
+    showCertExp?: boolean
+  }
+  secrets?: {
+    url?: string
+  }
+  server: {
+    monitors: UptimeKumaMonitor[]
+    overall: 'up' | 'degraded' | 'down' | 'maintenance' | 'unknown'
+    source: 'status-page' | 'badge'
+    title: string
+    error?: string
   }
 }
 

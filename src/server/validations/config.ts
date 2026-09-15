@@ -77,6 +77,11 @@ const footerSchema = z.object({
   html: z.string().optional(),
 }).optional()
 
+const uptimeKumaSchema = z.object({
+  url: z.string().optional(),
+  slug: z.string().optional(),
+}).optional()
+
 const metaSchema = z.object({
   description: z.string().optional(),
   keywords: z.string().optional(),
@@ -133,6 +138,7 @@ export const configSchema = z.object({
   searchProvider: z.enum(['google', 'duckduckgo']).optional(),
   searchWebradio: z.boolean().optional(),
   searchWebradioCountryCode: z.string().max(2).optional(),
+  uptimeKuma: uptimeKumaSchema,
   tags: z.array(tagSchema).optional(),
   tabs: z.array(tabSchema).optional(),
   services: servicesSchema.optional(),

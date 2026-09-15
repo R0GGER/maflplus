@@ -1,7 +1,7 @@
 <template>
   <Component :is="isLink ? 'a' : 'div'" :href="link" :target="target" class="flex items-center gap-2 py-1.5 px-2 hover:bg-fg/5 dark:hover:bg-fg/9 rounded-lg transition-all">
     <ServiceBaseStatus v-if="status && status.enabled && statusPosition === 'left'" :ping="{ ...data?.ping, animation: status?.animation }" class="flex-shrink-0" />
-    <div class="flex-shrink-0 w-5 h-5 overflow-hidden">
+    <div v-if="!icon?.hidden" class="flex-shrink-0 w-5 h-5 overflow-hidden">
       <ServiceBaseIcon v-if="icon" v-bind="{ ...icon, wrap: false }" />
     </div>
     <span class="text-sm line-clamp-1" :style="titleStyle">{{ title }}</span>

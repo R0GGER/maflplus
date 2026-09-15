@@ -64,6 +64,10 @@ function resolveByTypeComponent(type: string) {
     return resolveComponent('ServiceWebRadio')
   }
 
+  if (type === 'uptime-kuma') {
+    return resolveComponent('ServiceUptimeKuma')
+  }
+
   return resolveComponent('ServiceBase')
 }
 

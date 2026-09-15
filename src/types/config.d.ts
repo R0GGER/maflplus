@@ -115,6 +115,11 @@ export interface Footer {
   html?: string
 }
 
+export interface UptimeKumaConfig {
+  url?: string
+  slug?: string
+}
+
 export interface MetaOg {
   title?: string
   description?: string
@@ -144,6 +149,7 @@ export interface Config {
   searchProvider?: 'google' | 'duckduckgo'
   searchWebradio?: boolean
   searchWebradioCountryCode?: string
+  uptimeKuma?: UptimeKumaConfig
   tags: Tag[]
   services: ServicesGroup[]
   tabs?: Tab[]

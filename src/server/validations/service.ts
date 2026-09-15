@@ -5,6 +5,7 @@ export const statusSchema = z.object({
   interval: z.number().optional(),
   animation: z.boolean().optional(),
   position: z.enum(['left', 'right']).optional(),
+  monitor: z.union([z.number(), z.string()]).optional(),
 })
 
 export const iconSchema = z.object({
@@ -14,6 +15,7 @@ export const iconSchema = z.object({
   wrap: z.boolean().optional(),
   background: z.string().optional(),
   color: z.string().optional(),
+  hidden: z.boolean().optional(),
 })
 
 export const tagSchema = z.object({

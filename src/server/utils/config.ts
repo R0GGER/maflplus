@@ -50,7 +50,7 @@ export function getDefaultConfig(): CompleteConfig {
       color: '#000000',
       opacity: 0.5,
     },
-    faviconApi: 'https://favicon-api.hibbit.cloud',
+    faviconApi: 'https://faviconapi.com',
     styles: {
       category: {},
       title: {},

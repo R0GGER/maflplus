@@ -67,9 +67,15 @@
           <label class="admin-label">Background (filename in data/)</label>
           <input v-model="state.background" type="text" class="admin-input w-full" placeholder="background.jpg">
         </div>
-        <div>
+        <div class="sm:col-span-2">
           <label class="admin-label">Favicon API</label>
-          <input v-model="state.faviconApi" type="text" class="admin-input w-full" placeholder="https://favicon.vemetric.com/">
+          <input v-model="state.faviconApi" type="text" class="admin-input w-full" placeholder="https://faviconapi.com">
+          <p class="mt-1 text-xs text-fg-dimmed">
+            Pre-filled with
+            <a href="https://faviconapi.com" target="_blank" rel="noopener noreferrer" class="hover:underline" style="color: rgb(124 180 132)">faviconapi.com</a>
+            - you can replace this with any other API. To pick providers, fallbacks and size,
+            <a href="https://faviconapi.com/#tools" target="_blank" rel="noopener noreferrer" class="hover:underline" style="color: rgb(124 180 132)">create a Custom URL</a>.
+          </p>
         </div>
         <div>
           <label class="admin-label">Link Target</label>
@@ -79,6 +85,20 @@
             <option value="_parent">_parent</option>
             <option value="_top">_top</option>
           </select>
+        </div>
+        <div>
+          <label class="admin-label">Uptime Kuma URL</label>
+          <input v-model="state.uptimeKumaUrl" type="text" class="admin-input w-full" placeholder="http://uptime-kuma:3001">
+        </div>
+        <div>
+          <label class="admin-label">Uptime Kuma status page slug</label>
+          <input v-model="state.uptimeKumaSlug" type="text" class="admin-input w-full" placeholder="e.g. default">
+        </div>
+        <div class="sm:col-span-2">
+          <p class="text-xs text-fg-dimmed">
+            Default instance for the Uptime Kuma module and for status dots on bookmarks. With a slug you can
+            refer to monitors by name instead of by ID.
+          </p>
         </div>
       </div>
 

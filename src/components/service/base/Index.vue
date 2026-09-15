@@ -4,7 +4,7 @@
     <slot v-if="status && status.enabled && statusPosition === 'left'" name="status" :data="data">
       <ServiceBaseStatus :ping="{ ...data?.ping, animation: status?.animation }" class="flex-shrink-0 self-center" />
     </slot>
-    <div class="flex-shrink-0 flex">
+    <div v-if="!icon?.hidden" class="flex-shrink-0 flex">
       <div class="self-center overflow-hidden" :style="iconStyle">
         <slot name="icon" :service="data">
           <ServiceBaseIcon v-if="icon" v-bind="icon" />

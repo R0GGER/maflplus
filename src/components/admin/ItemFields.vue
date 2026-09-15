@@ -369,6 +369,89 @@
       </div>
     </template>
 
+    <!-- Uptime Kuma -->
+    <template v-if="item.serviceType === 'uptime-kuma'">
+      <div class="grid grid-cols-2 gap-2">
+        <div>
+          <label class="admin-label">Title</label>
+          <input v-model="item.title" type="text" class="admin-input w-full" placeholder="Services">
+        </div>
+        <div>
+          <label class="admin-label">Link (optional)</label>
+          <input v-model="item.link" type="text" class="admin-input w-full" placeholder="https://kuma.example.com/status/default">
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-2">
+        <div>
+          <label class="admin-label">Kuma URL (override)</label>
+          <input v-model="item.ukUrl" type="text" class="admin-input w-full" placeholder="-- (use global)">
+        </div>
+        <div>
+          <label class="admin-label">Status page slug</label>
+          <input v-model="item.ukSlug" type="text" class="admin-input w-full" placeholder="-- (use global)">
+        </div>
+      </div>
+      <p class="text-[10px] text-fg-dimmed">
+        The slug is the last part of your Kuma status page address:
+        <span class="font-mono">https://kuma.example.com/status/<span class="text-fg">default</span></span>
+      </p>
+      <div>
+        <label class="admin-label">Monitors (comma separated, "id" or "id:Label")</label>
+        <input v-model="item.ukMonitors" type="text" class="admin-input w-full" placeholder="1, 4:Mailserver">
+      </div>
+      <div
+        class="rounded border px-2 py-1.5 text-[10px] leading-relaxed text-fg-dimmed"
+        :class="ukStatusPageMode ? 'border-green-500/30 bg-green-500/5' : 'border-amber-500/30 bg-amber-500/5'"
+      >
+        <template v-if="ukStatusPageMode">
+          <span class="text-fg font-medium">Status page mode{{ !item.ukSlug ? ' (slug from Global Settings)' : '' }}.</span>
+          One request returns every public monitor of the page, so you get names, status, response time, 24h
+          uptime <span class="text-fg">and heartbeat bars</span>. Leave Monitors empty to show the whole page.
+        </template>
+        <template v-else>
+          <span class="text-fg font-medium">Badge mode - no heartbeat bars.</span>
+          Without a slug each monitor is read separately through Kuma's badge API, which returns single values
+          and no history. Monitors is required here, and the uptime window is free to choose.
+        </template>
+      </div>
+      <div class="grid grid-cols-2 gap-2">
+        <div>
+          <label class="admin-label">Uptime window (badge mode)</label>
+          <select v-model="item.ukUptimeDuration" class="admin-input w-full">
+            <option value="24h">24 hours</option>
+            <option value="168h">7 days</option>
+            <option value="720h">30 days</option>
+          </select>
+        </div>
+        <div>
+          <label class="admin-label">Heartbeat bars</label>
+          <input v-model="item.ukHeartbeatCount" type="number" min="1" max="100" class="admin-input w-full" placeholder="30">
+        </div>
+      </div>
+      <div>
+        <label class="admin-label">Bar width</label>
+        <input v-model="item.ukHeartbeatWidth" type="text" class="admin-input w-full" placeholder="-- (stretch to fit)">
+        <p class="mt-1 text-[10px] text-fg-dimmed">
+          Empty stretches the bars across the card, so more bars means thinner bars. A value such as
+          <span class="font-mono">4px</span> fixes the width and spreads the remaining space over the gaps.
+        </p>
+      </div>
+      <div class="flex flex-wrap gap-3">
+        <label class="inline-flex items-center gap-1 text-fg-dimmed admin-input cursor-pointer">
+          <input v-model="item.ukShowUptime" type="checkbox" style="accent-color: #69a870"> uptime
+        </label>
+        <label class="inline-flex items-center gap-1 text-fg-dimmed admin-input cursor-pointer">
+          <input v-model="item.ukShowPing" type="checkbox" style="accent-color: #69a870"> ping
+        </label>
+        <label class="inline-flex items-center gap-1 text-fg-dimmed admin-input cursor-pointer">
+          <input v-model="item.ukShowHeartbeat" type="checkbox" style="accent-color: #69a870"> heartbeat
+        </label>
+        <label class="inline-flex items-center gap-1 text-fg-dimmed admin-input cursor-pointer">
+          <input v-model="item.ukShowCertExp" type="checkbox" style="accent-color: #69a870"> cert expiry
+        </label>
+      </div>
+    </template>
+
     <!-- Span (all types) -->
     <div class="grid grid-cols-2 gap-2">
       <div>
@@ -390,9 +473,17 @@
         <label class="inline-flex items-center gap-1 text-fg-dimmed">
           <input v-model="item.iconType" type="radio" value="name"> name
         </label>
+        <label class="inline-flex items-center gap-1 text-fg-dimmed">
+          <input v-model="item.iconType" type="radio" value="none"> none
+        </label>
       </div>
 
-      <div v-if="item.iconType === 'favicon'">
+      <p v-if="item.iconType === 'none'" class="text-[10px] text-fg-dimmed">
+        No icon, and the space reserved for it is dropped so the title starts at the edge of the card. Also
+        suppresses the default icon of a module.
+      </p>
+
+      <div v-else-if="item.iconType === 'favicon'">
         <div class="flex gap-2 items-end">
           <div class="flex-1">
             <label class="admin-label">Domain</label>
@@ -476,6 +567,14 @@
           <input v-model="item.statusEnabled" type="checkbox" style="accent-color: #69a870">
         </label>
       </label>
+      <div v-if="item.statusEnabled">
+        <label class="admin-label">Uptime Kuma monitor (optional)</label>
+        <input v-model="item.statusMonitor" type="text" class="admin-input w-full" placeholder="e.g. 4 or Mailserver">
+        <p class="mt-1 text-[10px] text-fg-dimmed">
+          Leave empty to ping the link directly. Fill in a monitor ID, or its name when a global status page
+          slug is set, to take the status dot straight from Uptime Kuma.
+        </p>
+      </div>
       <div>
         <label class="admin-label">Tags (comma separated)</label>
         <input

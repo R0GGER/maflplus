@@ -279,7 +279,7 @@
                             <button v-if="!tab.locked" class="text-red-400 hover:text-red-300 px-1" @click="removeStackChild(ti, gi, ii, ci)">&times;</button>
                           </div>
                           <div v-if="isEditing(ti, gi, ii, ci)" class="mt-2 space-y-2">
-                            <AdminItemFields :item="child" :tab-index="ti" :group-index="gi" :item-index="ii" />
+                            <AdminItemFields :item="child" :tab-index="ti" :group-index="gi" :item-index="ii" :global-kuma-slug="state.uptimeKumaSlug" />
                           </div>
                         </div>
 
@@ -327,7 +327,7 @@
                         <button v-if="!tab.locked" class="text-red-400 hover:text-red-300 px-1" @click="removeItem(ti, gi, ii)">&times;</button>
                       </div>
                       <div v-if="isEditing(ti, gi, ii)" class="mt-2 space-y-2">
-                        <AdminItemFields :item="item" :tab-index="ti" :group-index="gi" :item-index="ii" />
+                        <AdminItemFields :item="item" :tab-index="ti" :group-index="gi" :item-index="ii" :global-kuma-slug="state.uptimeKumaSlug" />
                       </div>
                     </template>
                   </div>
@@ -626,6 +626,12 @@ const MODULE_CATEGORIES: ModuleCategory[] = [
       { type: 'tomtom-eta', label: 'TomTom' },
     ],
   },
+  {
+    category: 'Monitoring',
+    modules: [
+      { type: 'uptime-kuma', label: 'Uptime Kuma' },
+    ],
+  },
 ]
 
 const STACK_MODULES: ModuleOption[] = [
@@ -636,6 +642,7 @@ const STACK_MODULES: ModuleOption[] = [
   { type: 'datetime-weather', label: 'DT Weather' },
   { type: 'custom-html', label: 'HTML' },
   { type: 'tomtom-eta', label: 'TomTom ETA' },
+  { type: 'uptime-kuma', label: 'Uptime Kuma' },
 ]
 
 const TYPE_LABELS: Record<string, string> = {
@@ -649,6 +656,7 @@ const TYPE_LABELS: Record<string, string> = {
   'tomtom-eta-map': 'TomTom Route',
   'tomtom-traffic-map': 'TomTom Traffic',
   'web-radio': 'Web Radio',
+  'uptime-kuma': 'Uptime Kuma',
 }
 
 function typeLabel(t: string) {

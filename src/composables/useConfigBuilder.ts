@@ -3,8 +3,8 @@ import yaml from 'yaml'
 
 // --- Types ---
 
-export type ServiceType = 'bookmark' | 'openweathermap' | 'ip-api' | 'time' | 'datetime-weather' | 'greeting' | 'custom-html' | 'tomtom-eta' | 'tomtom-eta-map' | 'tomtom-traffic-map' | 'web-radio'
-export type IconType = 'favicon' | 'url' | 'name'
+export type ServiceType = 'bookmark' | 'openweathermap' | 'ip-api' | 'time' | 'datetime-weather' | 'greeting' | 'custom-html' | 'tomtom-eta' | 'tomtom-eta-map' | 'tomtom-traffic-map' | 'web-radio' | 'uptime-kuma'
+export type IconType = 'favicon' | 'url' | 'name' | 'none'
 
 export interface BuilderItem {
   serviceType: ServiceType
@@ -20,6 +20,7 @@ export interface BuilderItem {
   iconColor: string
   iconWrap: boolean
   statusEnabled: boolean
+  statusMonitor: string
   tags: string[]
   // openweathermap
   owmLat: string
@@ -78,6 +79,17 @@ export interface BuilderItem {
   // web-radio
   wrStationUuid: string
   wrCountryCode: string
+  // uptime-kuma
+  ukUrl: string
+  ukSlug: string
+  ukMonitors: string
+  ukUptimeDuration: string
+  ukHeartbeatCount: string
+  ukHeartbeatWidth: string
+  ukShowHeartbeat: boolean
+  ukShowUptime: boolean
+  ukShowPing: boolean
+  ukShowCertExp: boolean
   stack?: BuilderItem[]
 }
 
@@ -127,6 +139,8 @@ export type LogoType = 'none' | 'image' | 'text' | 'both'
 export interface BuilderState {
   title: string
   lang: string
+  uptimeKumaUrl: string
+  uptimeKumaSlug: string
   theme: string
   logoType: LogoType
   logoImage: string
@@ -198,6 +212,8 @@ function defaultState(): BuilderState {
   return {
     title: 'MAFL+',
     lang: 'en',
+    uptimeKumaUrl: '',
+    uptimeKumaSlug: '',
     theme: 'dark',
     logoType: 'none',
     logoImage: '',
@@ -210,7 +226,7 @@ function defaultState(): BuilderState {
     logoBorderRadius: '',
     logoPadding: '',
     background: '',
-    faviconApi: '',
+    faviconApi: 'https://faviconapi.com',
     overlayColor: '#000000',
     overlayOpacity: 0.5,
     target: '_blank',
@@ -258,7 +274,7 @@ export function newItem(serviceType: ServiceType = 'bookmark'): BuilderItem {
     serviceType,
     title: '', description: '', link: '', target: '', span: '',
     iconType: 'favicon', iconFavicon: '', iconUrl: '', iconName: '', iconColor: '', iconWrap: false,
-    statusEnabled: false, tags: [],
+    statusEnabled: false, statusMonitor: '', tags: [],
     owmLat: '', owmLon: '', owmUnits: 'metric', owmApiKey: '', owmShowDescription: 'true',
     ipapiLocationName: '',
     ipapiFlagIcon: 'true',
@@ -273,7 +289,40 @@ export function newItem(serviceType: ServiceType = 'bookmark'): BuilderItem {
     ttmLat: '', ttmLon: '', ttmAddress: '', ttmZoom: '12', ttmApiKey: '',
     ttmShowTrafficFlow: true, ttmShowIncidents: true, ttmMapHeight: '300', ttmMapStyle: 'standard',
     wrStationUuid: '', wrCountryCode: 'NL',
+    ukUrl: '', ukSlug: '', ukMonitors: '', ukUptimeDuration: '24h', ukHeartbeatCount: '30', ukHeartbeatWidth: '',
+    ukShowHeartbeat: true, ukShowUptime: true, ukShowPing: true, ukShowCertExp: false,
   }
+}
+
+/**
+ * Monitor lists are edited as `id` or `id:Label`, comma separated, so a custom
+ * label survives a round trip through the text field.
+ */
+function parseMonitorList(input: string): (number | string | { id: number, name: string })[] {
+  const monitors: (number | string | { id: number, name: string })[] = []
+
+  for (const entry of input.split(',').map(s => s.trim()).filter(Boolean)) {
+    const sep = entry.indexOf(':')
+    const rawId = sep === -1 ? entry : entry.slice(0, sep).trim()
+    const name = sep === -1 ? '' : entry.slice(sep + 1).trim()
+    const id = /^\d+$/.test(rawId) ? parseInt(rawId) : rawId
+
+    if (!name) monitors.push(id)
+    else if (typeof id === 'number') monitors.push({ id, name })
+    else monitors.push(id)
+  }
+
+  return monitors
+}
+
+function formatMonitorList(monitors: any[]): string {
+  return monitors
+    .map((m) => {
+      if (m && typeof m === 'object') return m.name ? `${m.id}:${m.name}` : String(m.id)
+      return String(m)
+    })
+    .filter(Boolean)
+    .join(', ')
 }
 
 // --- YAML -> State (import) ---
@@ -283,7 +332,10 @@ function parseRawItem(raw: any): BuilderItem {
   const item = newItem(sType)
 
   if (raw.icon) {
-    if (raw.icon.favicon) {
+    if (raw.icon.hidden) {
+      item.iconType = 'none'
+    }
+    else if (raw.icon.favicon) {
       item.iconType = 'favicon'
       item.iconFavicon = raw.icon.favicon
       item.iconColor = raw.icon.color || ''
@@ -348,6 +400,22 @@ function parseRawItem(raw: any): BuilderItem {
     if (raw.options?.stationUuid) item.wrStationUuid = raw.options.stationUuid
     if (raw.options?.countryCode) item.wrCountryCode = raw.options.countryCode
   }
+  else if (sType === 'uptime-kuma') {
+    item.title = raw.title || ''
+    item.description = raw.description || ''
+    item.link = raw.link || ''
+    if (raw.options?.url) item.ukUrl = raw.options.url
+    if (raw.secrets?.url) item.ukUrl = raw.secrets.url
+    if (raw.options?.slug) item.ukSlug = raw.options.slug
+    if (Array.isArray(raw.options?.monitors)) item.ukMonitors = formatMonitorList(raw.options.monitors)
+    if (raw.options?.uptimeDuration) item.ukUptimeDuration = raw.options.uptimeDuration
+    if (raw.options?.heartbeatCount != null) item.ukHeartbeatCount = String(raw.options.heartbeatCount)
+    if (raw.options?.heartbeatWidth != null) item.ukHeartbeatWidth = String(raw.options.heartbeatWidth)
+    if (raw.options?.showHeartbeat === false) item.ukShowHeartbeat = false
+    if (raw.options?.showUptime === false) item.ukShowUptime = false
+    if (raw.options?.showPing === false) item.ukShowPing = false
+    if (raw.options?.showCertExp) item.ukShowCertExp = true
+  }
   else if (sType === 'tomtom-traffic-map') {
     if (raw.options?.lat != null) item.ttmLat = String(raw.options.lat)
     if (raw.options?.lon != null) item.ttmLon = String(raw.options.lon)
@@ -383,6 +451,7 @@ function parseRawItem(raw: any): BuilderItem {
     item.link = raw.link || ''
     item.target = raw.target || ''
     if (raw.status?.enabled) item.statusEnabled = true
+    if (raw.status?.monitor != null) item.statusMonitor = String(raw.status.monitor)
     if (raw.tags && Array.isArray(raw.tags)) {
       item.tags = raw.tags.map((t: any) => typeof t === 'string' ? t : t.name || '')
     }
@@ -475,6 +544,10 @@ export function loadConfigFromYaml(state: BuilderState, yamlStr: string) {
   if (config.searchWebradio != null) state.searchWebradio = config.searchWebradio
   if (config.searchWebradioCountryCode) state.searchWebradioCountryCode = config.searchWebradioCountryCode
   if (config.behaviour?.target) state.target = config.behaviour.target
+  if (config.uptimeKuma) {
+    if (config.uptimeKuma.url) state.uptimeKumaUrl = config.uptimeKuma.url
+    if (config.uptimeKuma.slug) state.uptimeKumaSlug = config.uptimeKuma.slug
+  }
 
   if (config.backgroundOverlay) {
     if (config.backgroundOverlay.color) state.overlayColor = config.backgroundOverlay.color
@@ -654,6 +727,29 @@ function serializeItem(item: BuilderItem): Record<string, any> | null {
     if (item.wrCountryCode && item.wrCountryCode !== 'NL') opts.countryCode = item.wrCountryCode
     it.options = opts
   }
+  else if (sType === 'uptime-kuma') {
+    it.type = 'uptime-kuma'
+    if (item.title) it.title = item.title
+    if (item.description) it.description = item.description
+    if (item.link) it.link = item.link
+    const opts: any = {}
+    if (item.ukSlug) opts.slug = item.ukSlug
+    const monitors = parseMonitorList(item.ukMonitors)
+    if (monitors.length) opts.monitors = monitors
+    if (item.ukUptimeDuration && item.ukUptimeDuration !== '24h') opts.uptimeDuration = item.ukUptimeDuration
+    if (item.ukHeartbeatCount && item.ukHeartbeatCount !== '30') opts.heartbeatCount = parseInt(item.ukHeartbeatCount)
+    if (item.ukHeartbeatWidth) {
+      opts.heartbeatWidth = /^\d+$/.test(item.ukHeartbeatWidth.trim())
+        ? parseInt(item.ukHeartbeatWidth)
+        : item.ukHeartbeatWidth.trim()
+    }
+    if (!item.ukShowHeartbeat) opts.showHeartbeat = false
+    if (!item.ukShowUptime) opts.showUptime = false
+    if (!item.ukShowPing) opts.showPing = false
+    if (item.ukShowCertExp) opts.showCertExp = true
+    if (Object.keys(opts).length) it.options = opts
+    if (item.ukUrl) it.secrets = { url: item.ukUrl }
+  }
   else if (sType === 'tomtom-traffic-map') {
     it.type = 'tomtom-traffic-map'
     const opts: any = {}
@@ -698,7 +794,10 @@ function serializeItem(item: BuilderItem): Record<string, any> | null {
 
   // Icon (shared across all types)
   const icon: any = {}
-  if (item.iconType === 'favicon' && item.iconFavicon) {
+  if (item.iconType === 'none') {
+    icon.hidden = true
+  }
+  else if (item.iconType === 'favicon' && item.iconFavicon) {
     icon.favicon = item.iconFavicon
     if (item.iconWrap) icon.wrap = true
   }
@@ -714,7 +813,13 @@ function serializeItem(item: BuilderItem): Record<string, any> | null {
   if (Object.keys(icon).length) it.icon = icon
 
   if (sType === 'bookmark') {
-    if (item.statusEnabled) it.status = { enabled: true }
+    if (item.statusEnabled) {
+      const status: any = { enabled: true }
+      if (item.statusMonitor) {
+        status.monitor = /^\d+$/.test(item.statusMonitor) ? parseInt(item.statusMonitor) : item.statusMonitor
+      }
+      it.status = status
+    }
     if (item.tags && item.tags.length) it.tags = item.tags
   }
 
@@ -771,6 +876,12 @@ export function stateToYaml(state: BuilderState): string {
   }
 
   if (state.target) config.behaviour = { target: state.target }
+  if (state.uptimeKumaUrl || state.uptimeKumaSlug) {
+    const kuma: any = {}
+    if (state.uptimeKumaUrl) kuma.url = state.uptimeKumaUrl
+    if (state.uptimeKumaSlug) kuma.slug = state.uptimeKumaSlug
+    config.uptimeKuma = kuma
+  }
   if (state.searchProvider) config.searchProvider = state.searchProvider
   if (state.searchWebradio) {
     config.searchWebradio = true
