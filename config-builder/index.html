@@ -178,9 +178,15 @@
               <label class="block text-xs text-gray-400 mb-1">Background</label>
               <input type="text" id="cfg-background" placeholder="background.jpg" class="w-full bg-surface border border-gray-600 rounded px-3 py-1.5 text-sm" oninput="generateYaml()">
             </div>
-            <div>
+            <div class="sm:col-span-2">
               <label class="block text-xs text-gray-400 mb-1">Favicon API</label>
-              <input type="text" id="cfg-faviconApi" placeholder="https://favicon.vemetric.com/" class="w-full bg-surface border border-gray-600 rounded px-3 py-1.5 text-sm" oninput="generateYaml()">
+              <input type="text" id="cfg-faviconApi" value="https://faviconapi.com" placeholder="https://faviconapi.com" class="w-full bg-surface border border-gray-600 rounded px-3 py-1.5 text-sm" oninput="generateYaml()">
+              <p class="mt-1 text-[10px] text-gray-500">
+                Pre-filled with
+                <a href="https://faviconapi.com" target="_blank" rel="noopener noreferrer" class="hover:underline" style="color: rgb(124 180 132)">faviconapi.com</a>
+                - you can replace this with any other API. To pick providers, fallbacks and size,
+                <a href="https://faviconapi.com/#tools" target="_blank" rel="noopener noreferrer" class="hover:underline" style="color: rgb(124 180 132)">create a Custom URL</a>.
+              </p>
             </div>
             <div>
               <label class="block text-xs text-gray-400 mb-1">Search Provider</label>
@@ -1182,7 +1188,7 @@ function renderItem(ti, gi, ii, item) {
         <div class="grid grid-cols-2 gap-2">
           <div><label class="text-gray-500">Description</label><input type="text" value="${escHtml(item.description)}" class="w-full bg-surface border border-gray-600 rounded px-2 py-1" oninput="state.tabs[${ti}].groups[${gi}].items[${ii}].description=this.value; generateYaml()"></div>
           <div><label class="text-gray-500">Target (override)</label><select class="w-full bg-surface border border-gray-600 rounded px-2 py-1" onchange="state.tabs[${ti}].groups[${gi}].items[${ii}].target=this.value; generateYaml()">
-            <option value="" ${!item.target ? 'selected' : ''}>— (use global)</option>
+            <option value="" ${!item.target ? 'selected' : ''}>- (use global)</option>
             <option value="_blank" ${item.target === '_blank' ? 'selected' : ''}>_blank</option>
             <option value="_self" ${item.target === '_self' ? 'selected' : ''}>_self</option>
             <option value="_parent" ${item.target === '_parent' ? 'selected' : ''}>_parent</option>
@@ -1716,7 +1722,7 @@ function resetAll() {
   document.getElementById('cfg-logo-padding').value = '';
   toggleLogoFields();
   document.getElementById('cfg-background').value = '';
-  document.getElementById('cfg-faviconApi').value = '';
+  document.getElementById('cfg-faviconApi').value = 'https://faviconapi.com';
   document.getElementById('cfg-overlay-color').value = '#000000';
   document.getElementById('cfg-overlay-opacity').value = '0.5';
   document.getElementById('opacity-val').textContent = '0.5';
@@ -2139,7 +2145,7 @@ logo:
   fontWeight: 500
   color: "#ffffff"
 background: background.jpg
-faviconApi: https://favicon.vemetric.com
+faviconApi: https://faviconapi.com
 backgroundOverlay:
   color: "#000000"
   opacity: 0.85
