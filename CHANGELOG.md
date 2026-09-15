@@ -1,6 +1,122 @@
 # Changelog
 
 
+## Favicon API defaults to faviconapi.com
+
+### 🚀 Enhancements
+
+- **admin:** The **Favicon API** field in Global Settings is now pre-filled with `https://faviconapi.com`. You can still replace it with any other endpoint. A link to [faviconapi.com/#tools](https://faviconapi.com/#tools) lets you build a Custom URL with your preferred provider, fallbacks and size
+- **config:** The runtime default (used when `faviconApi` is omitted from `config.yml`) is now `https://faviconapi.com` as well
+
+### Compatibility
+
+- **config:** Existing configs that already set `faviconApi` are unchanged. Only configs without the key pick up the new default
+
+### Changed files
+
+| File | Change |
+|------|--------|
+| `src/components/admin/GlobalSettings.vue` | Pre-filled the field, updated the placeholder, and added the Custom URL help link |
+| `src/composables/useConfigBuilder.ts` | Default builder state is now `https://faviconapi.com` |
+| `src/server/utils/config.ts` | Runtime default matches the admin field |
+| `config-builder/index.html` | Same default, placeholder and Custom URL help link |
+| `docs/favicons.md` | Documented the new default and the Custom URL tools page |
+
+---
+
+## Finer heartbeat bars in the Uptime Kuma module
+
+### 🚀 Enhancements
+
+- **client:** The heartbeat bars are less chunky by default — 12px tall instead of 16px, a 2px gap instead of 1px, and a 1px corner radius instead of 2px, so they read as a row of bars rather than a row of blocks
+- **client:** New `heartbeatWidth` option to set the bar width directly. Left empty the bars keep stretching across the card, in which case their thickness follows from `heartbeatCount`. Given a width they stay exactly that wide and the leftover space is distributed over the gaps through `justify-between`, so the row stays flush with the card at any `span` instead of ending ragged
+- **admin:** Added the matching **Bar width** field to the Config Builder, below the bar count
+
+### Compatibility
+
+- **config:** `heartbeatWidth` is optional and defaults to the existing stretch behaviour. The restyled height, gap and radius do change the look of existing dashboards, but only within the space the bars already occupied
+
+### Changed files
+
+| File | Change |
+|------|--------|
+| `src/components/service/UptimeKuma.vue` | Restyled the bar row and added the `heartbeatWidth` computed plus `beatStyle`; bars switch between `flex-1` and `flex-none` depending on whether a width is set |
+| `src/types/services.d.ts` | Added `heartbeatWidth` to the module options |
+| `src/composables/useConfigBuilder.ts` | Added `ukHeartbeatWidth` with import and export, emitting a plain number for bare digits and a string for CSS lengths |
+| `src/components/admin/ItemFields.vue` | Added the **Bar width** field and its explanation |
+| `docs/modules.md` | Documented `heartbeatWidth` in the options table |
+
+---
+
+## Items without an icon
+
+### 🚀 Enhancements
+
+- **config:** New `icon.hidden` property that renders an item without an icon. Omitting `icon` already left the icon empty, but the fixed 4rem icon box (5×5 in list display) stayed reserved, so the title kept an indent it did not need. With `hidden` the whole icon area is dropped and the title starts at the edge of the card
+- **config:** `icon.hidden` also suppresses the fallback icon of modules that have one, such as `uptime-kuma` (`mdi:heart-pulse`) and `web-radio` (`mdi:radio`), which could otherwise not be turned off at all
+- **admin:** Added **none** as a fourth **Icon Type** in the Config Builder, next to favicon, url and name
+
+### Compatibility
+
+- **config:** Purely additive and off by default. Items without an `icon` key keep their reserved icon space, so no existing dashboard changes layout — only explicitly setting `hidden: true` does
+
+### Changed files
+
+| File | Change |
+|------|--------|
+| `src/components/service/base/Index.vue` | Icon area is now wrapped in `v-if="!icon?.hidden"`, which drops both the icon and the space it reserves. Because the `#icon` slot lives inside that wrapper, a module's fallback icon is suppressed along with it |
+| `src/components/ListItem.vue` | Same guard on the 5×5 icon box used by list display |
+| `src/types/services.d.ts` | Added `hidden` to `ServiceIcon` |
+| `src/server/validations/service.ts` | Added `hidden: z.boolean().optional()` to `iconSchema` |
+| `src/composables/useConfigBuilder.ts` | Added `none` to `IconType`, importing `icon.hidden` and exporting it again |
+| `src/components/admin/ItemFields.vue` | Added the **none** radio option and its explanation, replacing the icon source fields when selected |
+| `docs/configuration.md` | Documented `icon.hidden` in the icon properties table plus a "No icon" section explaining the difference with omitting `icon` |
+
+---
+
+## Uptime Kuma integration — monitoring widget and status dots on bookmarks
+
+### 🚀 Enhancements
+
+- **client:** New `uptime-kuma` module that shows the monitors of an existing [Uptime Kuma](https://github.com/louislam/uptime-kuma) instance as a native MAFL+ card — one row per monitor with a coloured status dot, uptime percentage, response time, optional certificate expiry, and a row of heartbeat bars for the recent history. The card description summarises the group (`Degraded · 3/4 up`), with maintenance taking precedence over everything else the way Kuma's own status page does
+- **client:** Any regular bookmark can now take its [status indicator](docs/configuration.md#status-from-uptime-kuma) from Kuma instead of a TCP ping by setting `status.monitor` to a monitor ID or name. That is considerably more accurate than a port probe, since Kuma already accounts for HTTP status codes, keyword checks, certificates and retries. Up is green, down and pending are red, and maintenance stays grey so planned downtime does not look like an outage
+- **config:** New global `uptimeKuma` block (`url` + `slug`) that serves both the module and the per-item status dots, so the instance only has to be configured once. Per module it can be overridden through `options.url` / `options.slug`, or through `secrets.url` when the instance URL should not reach the browser
+- **server:** Two data sources, picked automatically. With a status page `slug` the module reads `/api/status-page/:slug` plus `/api/status-page/heartbeat/:slug`, which covers every monitor — names, status, response time, 24h uptime and 100 beats of history — in two cached requests. Without a slug it falls back to the badge API per monitor, which has no history but allows any uptime window (`uptimeDuration: 720h`)
+- **server:** Badge values are read from the `<title>` of the generated SVG. By requesting badges with an empty `label` and `suffix` (and forced `upLabel`/`downLabel`/`pendingLabel`/`maintenanceLabel`), Kuma's own `filterAndJoin` reduces that title to a single bare, language-independent value such as `up` or `99.53`. Verified against the real `badge-maker` library across all five badge styles, including the `N/A` response for monitors that are not on a published status page
+- **server:** Upstream responses are cached with `defineCachedFunction` (status page config 5 min, heartbeats 30 s, badges 60 s) and shared between the module and the status dots, so a dashboard with dozens of Kuma-backed tiles still makes one upstream request per interval instead of one per tile
+- **admin:** The Config Builder covers the integration end to end — a **Monitoring → Uptime Kuma** module button, a field block for every option, the instance URL and slug under **Global Settings**, and an **Uptime Kuma monitor** field on bookmarks that appears once **Uptime monitoring** is checked
+- **admin:** The `monitors[]` array is edited as a comma separated list of `id` or `id:Label` entries, so a custom monitor label survives a round trip through the flat field model instead of being dropped on import
+
+### Compatibility
+
+- **config:** Purely additive — `uptimeKuma` and `status.monitor` are both optional. Items without `status.monitor` keep using the existing TCP ping, so both kinds can be mixed on one dashboard
+- **errors:** Misconfiguration and an unreachable instance are reported through the payload and rendered on the card ("No valid Uptime Kuma url configured", "… is unreachable") instead of as an HTTP error. `ServiceBase` shows its loading placeholder for as long as the fetch has no data, so a failing request would otherwise leave a permanent skeleton with no explanation
+- **privacy:** `options.url` and `uptimeKuma.url` are part of the settings payload the frontend receives, matching how other module options behave. `secrets.url` is stripped from everything the browser sees, as with every other module's secrets
+- **requirement:** Uptime Kuma only exposes data for monitors that belong to a **published status page** — this is a Kuma-side restriction that applies to both the status page API and the badge API
+- **admin:** A widget without any options is kept on export as a bare `type: uptime-kuma`, since that is valid once the global `uptimeKuma` block is set — unlike other modules, which are dropped when their required option is missing. The builder writes the per-widget instance URL to `secrets.url` so it is not exposed to the browser
+
+### Changed files
+
+| File | Change |
+|------|--------|
+| `src/server/utils/uptimeKuma.ts` | New shared Uptime Kuma client — cached `fetchStatusPage` / `fetchHeartbeats` / badge fetchers, `parseBadgeValue` with a `<text>` fallback and a guard against badge-maker versions that keep the label in the title, status mapping helpers, and `getMonitorPing` which resolves a single monitor (by ID, or by case-insensitive name when a slug is set) into the `{ status, time }` shape the status indicator expects |
+| `src/server/api/services/uptime-kuma.ts` | New endpoint — resolves the instance URL and slug from options, secrets and the global config, collects monitors from either the status page or the badge API, derives the overall status, and reports problems through the payload |
+| `src/components/service/UptimeKuma.vue` | New display component — `ServiceBase` for the header plus a monitor list with status dots, metrics and heartbeat bars; only applies its default `mdi:heart-pulse` when no icon of any kind is configured, since `ServiceBaseIcon` prefers `name` over `url` and `favicon` |
+| `src/server/utils/services.ts` | `getServiceWithDefaultData` now resolves the status indicator through a new `resolveStatus` helper, which routes `status.monitor` to Uptime Kuma and everything else to the existing `pingService` |
+| `src/components/Item.vue` | Registered `uptime-kuma` → `ServiceUptimeKuma` |
+| `src/types/services.d.ts` | Added `UptimeKumaService`, `UptimeKumaMonitor`, `UptimeKumaHeartbeat` and `UptimeKumaStatus`; added `monitor` to `ServiceStatus` |
+| `src/types/config.d.ts` | Added `UptimeKumaConfig` and the optional `uptimeKuma` key on `Config` |
+| `src/server/validations/config.ts` | Added `uptimeKumaSchema` (`url` + `slug`) to `configSchema` |
+| `src/server/validations/service.ts` | Added `monitor: z.union([z.number(), z.string()])` to `statusSchema` |
+| `src/composables/useConfigBuilder.ts` | Added `uptime-kuma` to `ServiceType`, the `uk*` item fields, `statusMonitor` on bookmarks, `uptimeKumaUrl` / `uptimeKumaSlug` on the builder state, import/export for all of them, and `parseMonitorList` / `formatMonitorList` for the `id:Label` notation |
+| `src/components/admin/ItemFields.vue` | Added the Uptime Kuma field block and the conditional monitor field under the bookmark status checkbox |
+| `src/components/admin/TabsEditor.vue` | Added the Monitoring category, the stack module entry and the `uptime-kuma` type label |
+| `src/components/admin/GlobalSettings.vue` | Added the global Uptime Kuma URL and status page slug fields |
+| `docs/modules.md` | Documented the module — data source comparison, admin usage, options, secrets, status colours, four config examples and caching notes |
+| `docs/configuration.md` | Documented the global `uptimeKuma` block and the `status.monitor` property, including the indicator colour table and where both live in the Config Builder |
+
+---
+
 ## Clear favicon cache per bookmark from the admin editor
 
 ### 🚀 Enhancements
