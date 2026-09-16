@@ -88,7 +88,7 @@ Display a logo in the top-left corner of the homepage. Three modes are available
 
 ### Image logo
 
-Place the image file in the data volume (the same directory as `config.yml`).
+Place the image file in the data volume (the same directory as `config.yml`), or upload it from **Logo & Favicon** in `/admin`.
 
 ```yaml
 logo: logo.png
@@ -152,13 +152,15 @@ Default: _none_ (no logo)
 
 ## Background
 
-Display a full-screen background image. Place the image file in the data volume (the same directory as `config.yml`).
+Display a full-screen background image. Upload it from **Global Settings** in `/admin` (same picker as the logo), or place the image file in the data volume (the same directory as `config.yml`).
+
+Admin uploads are converted to **WebP at 80% quality** — the best everyday trade-off between file size and visual quality for photographic backgrounds. SVG uploads are left unchanged. JPEG, PNG and AVIF still work if you copy them into `data/` yourself.
 
 ```yaml
-background: background.jpg
+background: background.webp
 ```
 
-Supported formats: `.jpg`, `.jpeg`, `.png`, `.gif`, `.webp`, `.svg`, `.avif`
+Supported formats: `.jpg`, `.jpeg`, `.png`, `.gif`, `.webp`, `.svg`, `.avif` (max 10 MB when uploading from `/admin`)
 
 Default: _none_
 
@@ -167,7 +169,7 @@ Default: _none_
 Add a color overlay on top of the background image to improve text readability. Only takes effect when `background` is set.
 
 ```yaml
-background: background.jpg
+background: background.webp
 backgroundOverlay:
   color: '#000000'
   opacity: 0.5
@@ -773,7 +775,7 @@ Set `hidden` to remove both:
     hidden: true
 ```
 
-In the Config Builder this is the fourth **Icon Type** option, **none**.
+In the Config Builder this is the fourth **Icon Type** option, **none**. Cards without an icon also use half the usual top padding, so the header is less tall without leftover icon space. Left and right padding stay full so the text still lines up with the group title; bottom padding stays full so the hover highlight still has margin before content below.
 
 ### Icon examples
 
@@ -979,18 +981,18 @@ Default: `_blank`
 
 ## Footer
 
-Display content at the bottom of every page. Both fields are optional — the footer is only shown when at least one is configured.
+Display content at the bottom of every page. Both fields are optional — the footer is only shown when at least one is configured. The Config Builder pre-fills `html` with the MAFL+ credit and an Admin link; existing `footer.html` values are left unchanged.
 
 ```yaml
 footer:
   text: "© 2026 My Dashboard"
-  html: '<p>Powered by <a href="https://github.com/R0GGER/maflplus" style="color:white;">MAFL+</a></p>'
+  html: '<p>Modified with ❤️ by <a href="https://github.com/R0GGER/mafl" style="color:white;">MAFL+</a> | <a target="_blank" href="/admin" style="color:white;">Admin</a></p>'
 ```
 
 | Property | Type | Description |
 |---|---|---|
 | `text` | `string` | Plain text displayed in the footer |
-| `html` | `string` | Custom HTML content rendered in the footer |
+| `html` | `string` | Custom HTML content rendered in the footer. Config Builder default: MAFL+ credit + Admin link |
 
 ---
 
