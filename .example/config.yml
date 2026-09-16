@@ -407,4 +407,4 @@ tabs:
           - title: Last.fm
             link: https://last.fm
 footer:
-  html: <p>Modified with ❤️ by <a href="https://github.com/R0GGER/mafl" style="color:white;">MAFL+</a></p>
+  html: <p>Modified with ❤️ by <a href="https://github.com/R0GGER/mafl" style="color:white;">MAFL+</a> | <a target="_blank" href="/admin" style="color:white;">Admin</a></p>
