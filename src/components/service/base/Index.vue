@@ -1,6 +1,6 @@
 <template>
   <ServicePlaceholder v-if="loadingOverlay" />
-  <Component :is="isLink ? 'a' : 'div'" v-else :href="link" :target="target" class="flex hover:bg-fg/5 dark:hover:bg-fg/9 rounded-2xl transition-all" :style="cardStyle">
+  <Component :is="isLink ? 'a' : 'div'" v-else :href="link" :target="target" class="flex hover:bg-fg/5 dark:hover:bg-fg/9 rounded-2xl transition-all" :style="resolvedCardStyle">
     <slot v-if="status && status.enabled && statusPosition === 'left'" name="status" :data="data">
       <ServiceBaseStatus :ping="{ ...data?.ping, animation: status?.animation }" class="flex-shrink-0 self-center" />
     </slot>
@@ -11,7 +11,7 @@
         </slot>
       </div>
     </div>
-    <div>
+    <div class="min-w-0 flex-1">
       <h3 class="text-lg pr-1 font-semibold line-clamp-2 flex gap-2 items-center" :style="titleStyle">
         <slot name="title" :service="data">
           {{ title }}
@@ -43,9 +43,10 @@ import type { Service, ServiceClient, TextStyle } from '~/types'
 const props = defineProps<ServiceClient<Service>>()
 
 const { $settings } = useNuxtApp()
-const { cardStyle, iconStyle } = useGridItemStyle()
+const { cardStyleFor, iconStyle } = useGridItemStyle()
 const isLink = computed(() => isUrl(props.link || ''))
 const target = computed(() => props.target || $settings.behaviour.target)
+const resolvedCardStyle = computed(() => cardStyleFor(props.icon))
 
 function toCSS(style?: TextStyle): Record<string, string | undefined> {
   if (!style) return {}
