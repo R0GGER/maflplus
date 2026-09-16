@@ -1,6 +1,84 @@
 # Changelog
 
 
+## Default footer HTML in the Config Builder
+
+### 🚀 Enhancements
+
+- **admin:** The **Footer HTML** field in Global Settings is now pre-filled with the MAFL+ credit and an Admin link: `Modified with ❤️ by MAFL+ | Admin`
+- **config-builder:** The standalone builder uses the same default, including after Reset and when loading the example config
+
+### Compatibility
+
+- **config:** Existing configs that already set `footer.html` are unchanged. Only a new/empty builder (or a config without `footer.html`) picks up the default. Clear the field to omit the HTML footer
+
+### Changed files
+
+| File | Change |
+|------|--------|
+| `src/composables/useConfigBuilder.ts` | Default builder state now includes the MAFL+ / Admin footer HTML |
+| `src/components/admin/GlobalSettings.vue` | Pre-filled the field, updated the placeholder, and noted that it can be cleared |
+| `config-builder/index.html` | Same default on the HTML field, on Reset, and in the example YAML |
+| `.example/config.yml` | Example footer matches the new default |
+| `docs/configuration.md` | Documented the Config Builder default |
+| `docs/home.md` | Same footer example |
+| `docs/admin.md` | Footer row mentions the default HTML |
+| `README.md` | Same footer example |
+
+---
+
+## Background (and logo) upload from the admin picker, stored as WebP 80%
+
+### 🚀 Enhancements
+
+- **admin:** The **Background** field in Global Settings is no longer a filename text box — it uses the same image picker as **Logo & Favicon**, with a wide preview of the current image
+- **admin:** You can **upload** a PNG, JPG, GIF, WebP, SVG or AVIF (max 10 MB) from the picker: **Upload…**, or drag-and-drop onto the field. Re-uploading the same name replaces the existing file
+- **admin:** Raster background uploads are re-encoded with Sharp to **WebP quality 80** (EXIF rotation applied, animation dropped to the first frame). The saved filename keeps the original stem (`holiday.jpg` → `holiday.webp`) and the picker selects that path immediately. The success toast reports the new size against the original, e.g. *"Uploaded holiday.webp as WebP 80% (842 KB, was 3.10 MB)"*
+- **admin:** SVG backgrounds are not rasterised — compressing a vector would only lose quality. The logo picker got the same upload/drop behaviour, but logo files are stored as uploaded (no WebP conversion)
+
+### Compatibility
+
+- **config:** `background` and `logo` still store a filename (or relative path) in `config.yml`. Existing values such as `background: background.jpg` keep working. Only new uploads from the admin picker are converted to WebP. Copying a JPEG/PNG into `data/` by hand still works. Click **Save & Apply** after picking or uploading for the dashboard to use the new file
+
+### Changed files
+
+| File | Change |
+|------|--------|
+| `src/server/utils/dataImages.ts` | Shared `data/` image listing, filename sanitisation, magic-byte checks, write helper, and `optimizeBackgroundImage()` (WebP q80) |
+| `src/server/api/admin/data-images.get.ts` | Lists images via the shared helper |
+| `src/server/api/admin/data-images.post.ts` | New admin-gated multipart upload into `./data/` (max 10 MB); `purpose=background` triggers WebP optimisation and returns original/new size |
+| `src/components/admin/ImagePicker.vue` | Upload…, drag-and-drop, optional wide preview, `optimize="background"`, toast with WebP size comparison |
+| `src/components/admin/GlobalSettings.vue` | Background uses `<AdminImagePicker variant="wide" optimize="background">`; logo picker wired for upload toasts |
+| `docs/configuration.md` | Documented admin upload and WebP 80% conversion for backgrounds |
+| `docs/admin.md` | Global Settings now mentions image upload |
+| `docs/home.md` | Background can be uploaded from `/admin` and is stored as WebP 80% |
+
+---
+
+## Tighter cards when the icon is hidden
+
+### 🚀 Enhancements
+
+- **client:** Cards with `icon.hidden` use half the usual **top** padding, so the header is less tall without a leftover icon box
+- **client:** Left and right padding stay full, so the card text still lines up with the group title (e.g. `UPTIME MONITORING`). An earlier half-left padding shifted the module a few pixels past that heading
+- **client:** Bottom padding stays full, so the hover/rollover background still has margin before content below the header. Pulling the Uptime Kuma monitor list up into that header put the heartbeat bars inside the highlight with no bottom margin — that pull-up is gone
+- **client:** The Uptime Kuma monitor list keeps the same horizontal inset and uses tighter gaps between rows when the icon is hidden
+
+### Compatibility
+
+- **config:** Only applies when `icon.hidden: true`. Cards with a normal icon keep the existing padding
+
+### Changed files
+
+| File | Change |
+|------|--------|
+| `src/composables/useGridItemStyle.ts` | `cardStyleFor(icon)` halves only top padding when the icon is hidden; left/right/bottom stay full |
+| `src/components/service/base/Index.vue` | Uses `cardStyleFor(icon)` so the denser top padding is applied; text column gets `min-w-0 flex-1` so long titles still truncate |
+| `src/components/service/UptimeKuma.vue` | Full horizontal inset on the monitor list, tighter row gaps when the icon is hidden, no overlap with the header hover |
+| `docs/configuration.md` | Noted denser top padding (with preserved horizontal inset) under "No icon" |
+
+---
+
 ## Favicon API defaults to faviconapi.com
 
 ### 🚀 Enhancements
@@ -52,7 +130,7 @@
 
 ### 🚀 Enhancements
 
-- **config:** New `icon.hidden` property that renders an item without an icon. Omitting `icon` already left the icon empty, but the fixed 4rem icon box (5×5 in list display) stayed reserved, so the title kept an indent it did not need. With `hidden` the whole icon area is dropped and the title starts at the edge of the card
+- **config:** New `icon.hidden` property that renders an item without an icon. Omitting `icon` already left the icon empty, but the fixed 4rem icon box (5×5 in list display) stayed reserved. With `hidden` that whole area is dropped. Horizontal padding stays full so the title still lines up with the group heading; denser top padding for that case is covered under [Tighter cards when the icon is hidden](#tighter-cards-when-the-icon-is-hidden)
 - **config:** `icon.hidden` also suppresses the fallback icon of modules that have one, such as `uptime-kuma` (`mdi:heart-pulse`) and `web-radio` (`mdi:radio`), which could otherwise not be turned off at all
 - **admin:** Added **none** as a fourth **Icon Type** in the Config Builder, next to favicon, url and name
 
@@ -86,6 +164,7 @@
 - **server:** Upstream responses are cached with `defineCachedFunction` (status page config 5 min, heartbeats 30 s, badges 60 s) and shared between the module and the status dots, so a dashboard with dozens of Kuma-backed tiles still makes one upstream request per interval instead of one per tile
 - **admin:** The Config Builder covers the integration end to end — a **Monitoring → Uptime Kuma** module button, a field block for every option, the instance URL and slug under **Global Settings**, and an **Uptime Kuma monitor** field on bookmarks that appears once **Uptime monitoring** is checked
 - **admin:** The `monitors[]` array is edited as a comma separated list of `id` or `id:Label` entries, so a custom monitor label survives a round trip through the flat field model instead of being dropped on import
+- **admin:** The status page **slug** field explains that it is the last segment of `…/status/<slug>`, and a live mode banner switches between **Status page mode** (heartbeat bars) and **Badge mode — no heartbeat bars** depending on whether a slug is set (including one inherited from Global Settings). The slug placeholder is `-- (use global)` so an empty field is not mistaken for the value `default`
 
 ### Compatibility
 
@@ -109,7 +188,7 @@
 | `src/server/validations/config.ts` | Added `uptimeKumaSchema` (`url` + `slug`) to `configSchema` |
 | `src/server/validations/service.ts` | Added `monitor: z.union([z.number(), z.string()])` to `statusSchema` |
 | `src/composables/useConfigBuilder.ts` | Added `uptime-kuma` to `ServiceType`, the `uk*` item fields, `statusMonitor` on bookmarks, `uptimeKumaUrl` / `uptimeKumaSlug` on the builder state, import/export for all of them, and `parseMonitorList` / `formatMonitorList` for the `id:Label` notation |
-| `src/components/admin/ItemFields.vue` | Added the Uptime Kuma field block and the conditional monitor field under the bookmark status checkbox |
+| `src/components/admin/ItemFields.vue` | Added the Uptime Kuma field block (including the slug hint and status-page/badge mode banner) and the conditional monitor field under the bookmark status checkbox |
 | `src/components/admin/TabsEditor.vue` | Added the Monitoring category, the stack module entry and the `uptime-kuma` type label |
 | `src/components/admin/GlobalSettings.vue` | Added the global Uptime Kuma URL and status page slug fields |
 | `docs/modules.md` | Documented the module — data source comparison, admin usage, options, secrets, status colours, four config examples and caching notes |
