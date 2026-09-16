@@ -63,9 +63,19 @@
             placeholder="NL"
           >
         </div>
-        <div>
-          <label class="admin-label">Background (filename in data/)</label>
-          <input v-model="state.background" type="text" class="admin-input w-full" placeholder="background.jpg">
+        <div class="sm:col-span-2">
+          <label class="admin-label">Background</label>
+          <AdminImagePicker
+            v-model="state.background"
+            placeholder="background.webp"
+            variant="wide"
+            optimize="background"
+            @toast="(p) => emit('toast', p)"
+          />
+          <p class="mt-1 text-xs text-fg-dimmed">
+            Pick an image from your <code class="text-[11px]">data/</code> folder, or upload a new one.
+            Uploads are converted to <code class="text-[11px]">.webp</code> at 80% quality.
+          </p>
         </div>
         <div class="sm:col-span-2">
           <label class="admin-label">Favicon API</label>
@@ -121,9 +131,17 @@
           <label class="admin-label">Footer Text</label>
           <input v-model="state.footerText" type="text" class="admin-input w-full" placeholder="Optional footer text">
         </div>
-        <div>
+        <div class="sm:col-span-2">
           <label class="admin-label">Footer HTML</label>
-          <input v-model="state.footerHtml" type="text" class="admin-input w-full" placeholder="Optional footer HTML">
+          <input
+            v-model="state.footerHtml"
+            type="text"
+            class="admin-input w-full"
+            placeholder='<p>Modified with ❤️ by <a href="https://github.com/R0GGER/mafl" style="color:white;">MAFL+</a> | <a target="_blank" href="/admin" style="color:white;">Admin</a></p>'
+          >
+          <p class="mt-1 text-xs text-fg-dimmed">
+            Pre-filled with the MAFL+ credit and an Admin link. Clear the field to omit the HTML footer.
+          </p>
         </div>
       </div>
     </div>
@@ -152,9 +170,13 @@
       <div v-if="state.logoType === 'image' || state.logoType === 'both'" class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label class="admin-label">Logo Image</label>
-          <AdminImagePicker v-model="state.logoImage" placeholder="logo.png" />
+          <AdminImagePicker
+            v-model="state.logoImage"
+            placeholder="logo.png"
+            @toast="(p) => emit('toast', p)"
+          />
           <p class="mt-1 text-xs text-fg-dimmed">
-            Pick an image from your <code class="text-[11px]">data/</code> folder, or use a custom path.
+            Pick an image from your <code class="text-[11px]">data/</code> folder, upload a new one (max 10 MB), or use a custom path.
           </p>
         </div>
       </div>
