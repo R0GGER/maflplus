@@ -256,7 +256,7 @@ function defaultState(): BuilderState {
     tags: [],
     tabs: [],
     footerText: '',
-    footerHtml: '',
+    footerHtml: '<p>Modified with ❤️ by <a href="https://github.com/R0GGER/mafl" style="color:white;">MAFL+</a> | <a target="_blank" href="/admin" style="color:white;">Admin</a></p>',
     metaDescription: '',
     metaKeywords: '',
     metaAuthor: '',
