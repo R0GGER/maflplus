@@ -414,12 +414,12 @@ Enable a live ping indicator per service. The position can be set to `left` or `
 
 ### Footer
 
-Display content at the bottom of every page.
+Display content at the bottom of every page. The Config Builder pre-fills `html` with the MAFL+ credit and an Admin link.
 
 ```yaml
 footer:
   text: "© 2026 My Dashboard"
-  html: '<p>Powered by <a href="https://github.com/R0GGER/maflplus">MAFL+</a></p>'
+  html: '<p>Modified with ❤️ by <a href="https://github.com/R0GGER/mafl" style="color:white;">MAFL+</a> | <a target="_blank" href="/admin" style="color:white;">Admin</a></p>'
 ```
 
 ## 🛡️ Admin Panel
