@@ -13,8 +13,13 @@
       </template>
     </ServiceBase>
 
-    <div v-if="monitors.length" class="flex flex-col" :style="listStyle">
-      <div v-for="monitor in monitors" :key="monitor.id" class="flex flex-col gap-1 py-1">
+    <div v-if="monitors.length" class="flex flex-col" :class="iconHidden ? 'gap-0.5' : ''" :style="listStyle">
+      <div
+        v-for="monitor in monitors"
+        :key="monitor.id"
+        class="flex flex-col"
+        :class="iconHidden ? 'gap-0.5 py-0.5' : 'gap-1 py-1'"
+      >
         <div class="flex items-baseline gap-2">
           <span class="h-2.5 w-2.5 flex-shrink-0 self-center rounded-full" :class="statusColor(monitor.status)" />
           <span class="text-sm truncate">{{ monitor.name }}</span>
@@ -64,7 +69,7 @@ const OVERALL_LABELS: Record<UptimeKumaService['server']['overall'], string> = {
   unknown: 'No data',
 }
 
-const { itemPadding } = useGridItemStyle()
+const { itemPadding, noIconPadding } = useGridItemStyle()
 
 const { data } = useServiceData<UptimeKumaService>(props, {
   immediate: !!props.type,
@@ -72,6 +77,7 @@ const { data } = useServiceData<UptimeKumaService>(props, {
 
 const monitors = computed<UptimeKumaMonitor[]>(() => data.value?.data?.monitors || [])
 const showHeartbeat = computed(() => props.options?.showHeartbeat !== false)
+const iconHidden = computed(() => !!props.icon?.hidden)
 
 // Without a width the bars stretch to fill the row, so their thickness follows
 // from the beat count. A fixed width instead spreads the slack over the gaps,
@@ -94,10 +100,16 @@ const hasCustomIcon = computed(() => {
   return !!(props.icon?.name || props.icon?.url || props.icon?.favicon)
 })
 
-// Align the monitor list with the card content, which uses the same padding.
-const listStyle = computed(() => ({
-  padding: `0 ${itemPadding.value} ${itemPadding.value}`,
-}))
+// Align the monitor list with the card content on the same horizontal inset
+// as the group title. With icon.hidden only the vertical rhythm is denser —
+// never shift the list left, or it drifts past the group heading.
+const listStyle = computed(() => {
+  const bottom = iconHidden.value ? noIconPadding.value : itemPadding.value
+
+  return {
+    padding: `0 ${itemPadding.value} ${bottom}`,
+  }
+})
 
 const emptyMessage = computed(() => {
   return props.options?.slug
