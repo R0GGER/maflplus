@@ -304,7 +304,7 @@
             </div>
             <div>
               <label class="block text-xs text-gray-400 mb-1">HTML</label>
-              <input type="text" id="cfg-footer-html" placeholder="<p>Powered by MAFL+</p>" class="w-full bg-surface border border-gray-600 rounded px-3 py-1.5 text-sm" oninput="generateYaml()">
+              <input type="text" id="cfg-footer-html" value='<p>Modified with ❤️ by <a href="https://github.com/R0GGER/mafl" style="color:white;">MAFL+</a> | <a target="_blank" href="/admin" style="color:white;">Admin</a></p>' placeholder='<p>Modified with ❤️ by <a href="https://github.com/R0GGER/mafl" style="color:white;">MAFL+</a> | <a target="_blank" href="/admin" style="color:white;">Admin</a></p>' class="w-full bg-surface border border-gray-600 rounded px-3 py-1.5 text-sm" oninput="generateYaml()">
             </div>
           </div>
         </div>
@@ -1743,7 +1743,7 @@ function resetAll() {
   document.getElementById('cfg-spacing-list-gap-x').value = '1.5rem';
   document.getElementById('cfg-spacing-list-gap-y').value = '0.5rem';
   document.getElementById('cfg-footer-text').value = '';
-  document.getElementById('cfg-footer-html').value = '';
+  document.getElementById('cfg-footer-html').value = '<p>Modified with ❤️ by <a href="https://github.com/R0GGER/mafl" style="color:white;">MAFL+</a> | <a target="_blank" href="/admin" style="color:white;">Admin</a></p>';
   document.querySelectorAll('[data-style]').forEach(el => { el.value = ''; });
   state = { tags: [], tabs: [], cardStyle: emptyCardStyle() };
   loadCardStyleToUI(state.cardStyle);
@@ -2546,7 +2546,7 @@ tabs:
           - title: Last.fm
             link: https://last.fm
 footer:
-  html: <p>Modified with ❤️ by <a href="https://github.com/R0GGER/mafl" style="color:white;">MAFL+</a></p>
+  html: <p>Modified with ❤️ by <a href="https://github.com/R0GGER/mafl" style="color:white;">MAFL+</a> | <a target="_blank" href="/admin" style="color:white;">Admin</a></p>
 `;
   try {
     const config = jsyaml.load(exampleYaml);
